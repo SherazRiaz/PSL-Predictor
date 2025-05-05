@@ -365,7 +365,7 @@ IMPORTANT: Ensure the response is ONLY the JSON object with the exact structure 
       const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer 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`,
+          "Authorization": `Bearer `,
           "Content-Type": "application/json",
           "HTTP-Referer": window.location.origin,
           "X-Title": "PSL Predictor App"
