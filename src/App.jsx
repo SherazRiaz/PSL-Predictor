@@ -124,6 +124,7 @@ const teamInfo = {
     ]
   }
 };
+
 const teamData = {
   "teams": [
     {
@@ -189,7 +190,6 @@ const teamData = {
   ]
 };
 
-
 const venueCoordinates = {
   "Multan Cricket Stadium": { lat: 30.1575, long: 71.5249 },
   "Gaddafi Stadium": { lat: 31.5204, long: 74.3587 },
@@ -203,36 +203,34 @@ const MatchCard = ({ match, teamInfo }) => {
   const [error, setError] = useState(null);
   const [result, setResult] = useState(null);
 
-  // Convert date and time to a Date object
   const [day, month, year] = match.date.split('-');
   const [hours, minutes] = match.time.split(':');
   const matchDateTime = new Date(year, month - 1, day, hours, minutes);
 
-
   const countdownRenderer = ({ days, hours, minutes, seconds, completed, formatted, props }) => {
-  const matchStartTime = new Date(props.date).getTime(); // props.date is the target countdown date
-  const now = Date.now();
-  const matchEndTime = matchStartTime + 4 * 60 * 60 * 1000; // 4 hours after match starts
+    const matchStartTime = new Date(props.date).getTime();
+    const now = Date.now();
+    const matchEndTime = matchStartTime + 4 * 60 * 60 * 1000;
 
-  if (now >= matchEndTime) {
-    return <span style={styles.countdown}>Match completed!</span>;
-  } else if (completed) {
-    return <span style={styles.countdown}>Match in progress!</span>;
-  } else {
-    return (
-      <span style={styles.countdown}>
-        {days}d {hours}h {minutes}m {seconds}s
-      </span>
-    );
-  }
-};
+    if (now >= matchEndTime) {
+      return <span style={styles.countdown}>Match completed!</span>;
+    } else if (completed) {
+      return <span style={styles.countdown}>Match in progress!</span>;
+    } else {
+      return (
+        <span style={styles.countdown}>
+          {days}d {hours}h {minutes}m {seconds}s
+        </span>
+      );
+    }
+  };
 
-const isMatchCompleted = () => {
-  const matchStartTime = matchDateTime.getTime();
-  const now = Date.now();
-  const matchEndTime = matchStartTime + 4 * 60 * 60 * 1000; // 4 hours after match starts
-  return now >= matchEndTime;
-};
+  const isMatchCompleted = () => {
+    const matchStartTime = matchDateTime.getTime();
+    const now = Date.now();
+    const matchEndTime = matchStartTime + 4 * 60 * 60 * 1000;
+    return now >= matchEndTime;
+  };
 
   const getTeamForm = (teamName) => {
     const team = teamData.teams.find(t => t.name === teamName);
@@ -244,107 +242,109 @@ const isMatchCompleted = () => {
     setLoading(true);
     setError(null);
 
-    const coordinates = venueCoordinates[match.venue];
+    try {
+      const historicalMatches = [];
+      for (let i = 1475241; i <= 1475251; i++) {
+        try {
+          const response = await fetch(`/public/${i}.json`);
+          const data = await response.json();
+          historicalMatches.push(data);
+        } catch (err) {
+          console.warn(`Failed to load match data for ID ${i}:`, err);
+        }
+      }
+
+      const coordinates = venueCoordinates[match.venue];
       const weatherResponse = await fetch(
         `https://api.open-meteo.com/v1/forecast?latitude=${coordinates.lat}&longitude=${coordinates.long}&current=temperature_2m,wind_speed_10m`
       );
       const weatherData = await weatherResponse.json();
 
-    const processedMatches = matchesData[2].matches.map(match => ({
-      date: match.date,
-      teams: match.teams || [match.home_team, match.away_team],
-      result: match.result,
-      venue: match.venue,
-      winner: match.result && typeof match.result === 'string' && match.teams ? 
-        (match.result.includes(match.teams[0]) ? match.teams[0] : 
-         match.result.includes(match.teams[1]) ? match.teams[1] : null) : null
-    })).concat(
-      matchesData[3].matches.map(match => {
-        const teams = [];
-        if (match.score?.peshawar_zalmi) teams.push("Peshawar Zalmi");
-        if (match.score?.multan_sultans) teams.push("Multan Sultans");
-        if (match.score?.karachi_kings) teams.push("Karachi Kings");
-        if (match.score?.islamabad_united) teams.push("Islamabad United");
-        if (match.score?.lahore_qalandars) teams.push("Lahore Qalandars");
-        if (match.score?.quetta_gladiators) teams.push("Quetta Gladiators");
-        
-        const resultStr = String(match.result || '');
-        return {
-          date: match.date,
-          teams: teams,
-          result: resultStr,
-          venue: match.venue,
-          winner: resultStr.includes("won") ? resultStr.split(" won")[0] : null
-        };
-      })
-    ).concat(
-      matchesData[4].matches.map(match => {
-        const teams = [];
-        if (match.score?.peshawar_zalmi) teams.push("Peshawar Zalmi");
-        if (match.score?.multan_sultans) teams.push("Multan Sultans");
-        if (match.score?.karachi_kings) teams.push("Karachi Kings");
-        if (match.score?.islamabad_united) teams.push("Islamabad United");
-        if (match.score?.lahore_qalandars) teams.push("Lahore Qalandars");
-        if (match.score?.quetta_gladiators) teams.push("Quetta Gladiators");
-        
-        const resultStr = String(match.result || '');
-        return {
-          date: match.date,
-          teams: teams,
-          result: resultStr,
-          venue: match.venue,
-          winner: resultStr.includes("won") ? resultStr.split(" won")[0] : null
-        };
-      })
-    );
+      const processedMatches = matchesData[2].matches.map(match => ({
+        date: match.date,
+        teams: match.teams || [match.home_team, match.away_team],
+        result: match.result,
+        venue: match.venue,
+        winner: match.result && typeof match.result === 'string' && match.teams ? 
+          (match.result.includes(match.teams[0]) ? match.teams[0] : 
+           match.result.includes(match.teams[1]) ? match.teams[1] : null) : null
+      })).concat(
+        matchesData[3].matches.map(match => {
+          const teams = [];
+          if (match.score?.peshawar_zalmi) teams.push("Peshawar Zalmi");
+          if (match.score?.multan_sultans) teams.push("Multan Sultans");
+          if (match.score?.karachi_kings) teams.push("Karachi Kings");
+          if (match.score?.islamabad_united) teams.push("Islamabad United");
+          if (match.score?.lahore_qalandars) teams.push("Lahore Qalandars");
+          if (match.score?.quetta_gladiators) teams.push("Quetta Gladiators");
+          
+          const resultStr = String(match.result || '');
+          return {
+            date: match.date,
+            teams: teams,
+            result: resultStr,
+            venue: match.venue,
+            winner: resultStr.includes("won") ? resultStr.split(" won")[0] : null
+          };
+        })
+      );
 
-    const teamMatches = processedMatches.filter(m => 
-      m.teams.includes(match.team1) || m.teams.includes(match.team2)
-    );
+      const teamMatches = processedMatches.filter(m => 
+        m.teams.includes(match.team1) || m.teams.includes(match.team2)
+      );
 
-    const team1Standing = matchesData[0].find(t => t.Team === match.team1);
-    const team2Standing = matchesData[0].find(t => t.Team === match.team2);
+      const team1Standing = matchesData[0].find(t => t.Team === match.team1);
+      const team2Standing = matchesData[0].find(t => t.Team === match.team2);
 
-    const relevantData = {
-      standings: {
-        [match.team1]: team1Standing,
-        [match.team2]: team2Standing
-      },
-      recentMatches: teamMatches,
-      teams: {
-        [match.team1]: teamInfo[match.team1],
-        [match.team2]: teamInfo[match.team2]
-      },
-      venue: match.venue
-    };
+      const relevantData = {
+        standings: {
+          [match.team1]: team1Standing,
+          [match.team2]: team2Standing
+        },
+        recentMatches: teamMatches,
+        historicalData: historicalMatches,
+        teams: {
+          [match.team1]: teamInfo[match.team1],
+          [match.team2]: teamInfo[match.team2]
+        },
+        venue: match.venue
+      };
 
-    const prompt = `Analyze the following match between ${match.team1} and ${match.team2} using this data:
+      const prompt = `Analyze the following match between ${match.team1} and ${match.team2} using this data:
 
-${JSON.stringify(relevantData, null, 2)} and waether data for venue ${weatherData.current.temperature_2m} , ${weatherData.current.wind_speed_10m}
+${JSON.stringify(relevantData, null, 2)} and weather data for venue ${weatherData.current.temperature_2m}°C, ${weatherData.current.wind_speed_10m} m/s
 
 Please provide a prediction analysis with the following criteria:
 
-1. Key players:
+1. Historical Performance (based on historical match data):
+   - Past encounters between teams
+   - Performance at similar venues
+   - Performance in similar weather conditions
+
+2. Key players:
    - Most impactful player from each team based on team composition
    - Consider team roles and experience
 
-2. Win probability based on:
+3. Win probability based on:
    - Team composition and balance
    - Recent team performance
    - Head-to-head potential
+   - Historical match data analysis
 
-3. Recent form:
+4. Recent form:
    - ${match.team1}: ${getTeamForm(match.team1).join(", ")}
    - ${match.team2}: ${getTeamForm(match.team2).join(", ")}
    - Team strength analysis
 
-4. Head-to-head analysis:
+5. Head-to-head analysis:
    - Team composition comparison
    - Strategic matchups
+   - Historical matchup statistics
 
-5. Venue performance:
+6. Venue performance:
    - Team adaptability to ${match.venue}
    - Historical venue statistics
+   - Current weather impact analysis
 
 Format response as JSON:
 {
@@ -362,7 +362,8 @@ Format response as JSON:
   },
   "headToHead": {
     "rate": "Predicted matchup analysis",
-    "lastMatch": "First meeting this season"
+    "lastMatch": "First meeting this season",
+    "historicalStats": "Summary of past encounters"
   },
   "venuePerformance": {
     "${match.team1}": number,
@@ -370,11 +371,10 @@ Format response as JSON:
   }
 }`;
 
-    try {
       const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer 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`,
+          "Authorization": `Bearer`,
           "Content-Type": "application/json",
           "HTTP-Referer": window.location.origin,
           "X-Title": "PSL Predictor App"
@@ -434,7 +434,7 @@ Format response as JSON:
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
     <div style={styles.card}>
